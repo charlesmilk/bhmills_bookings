@@ -141,8 +141,3 @@ class BookingSystem:
             minutes = (seconds // 60) % 60
             print(f"Success in bookings at {dt.hour}h{dt.minute}m, sleeping {hours}h{minutes}m until tomorrow")
             time.sleep(seconds)
-
-
-if __name__ == '__main__':
-    booking_system = BookingSystem(path_users_data, website_base_url)
-    booking_system.run()
