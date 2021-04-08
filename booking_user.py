@@ -79,8 +79,7 @@ class BookingUser:
 
                 for real_class in filtered_bookings[day]["classes"]:
                     available_spots = real_class["limit"] - real_class["joinedUsers"]
-                    if real_class["classTime"] == hour and available_spots >= required_spots and real_class[
-                        "active"] == True:
+                    if real_class["classTime"] == hour and available_spots >= required_spots and real_class["active"]:
                         classes_to_schedule.append(real_class)
 
             if len(classes_to_schedule) > 0:
