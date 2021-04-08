@@ -9,9 +9,6 @@ from dateutil import parser
 
 from booking_user import BookingUser
 
-website_base_url = "https://bhmbackend.m8north.co.uk/"
-path_users_data = "users_data/users_info.json"
-
 
 class BookingSystem:
     def __init__(self, users_configs: str, base_url: str):
