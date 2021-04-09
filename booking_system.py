@@ -68,13 +68,13 @@ class BookingSystem:
                 print(f"Found target date available at {dt.hour}h{dt.minute}m")
                 break
             else:
-                print(f"Target date not available at {dt.hour}h{dt.minute}m. Sleeping 21m20s.")
+                print(f"Target date not available at {dt.hour}h{dt.minute}m. Sleeping 20mint.")
                 end = time.time()
                 if end - start >= 10800:
                     print("3 hours have passed since we started searching for the target date. Re-authenticating.")
                     self.enforce_auth()
                     start = time.time()
-                time.sleep(1220)
+                time.sleep(1200)
 
     def save_user_bookings(self):
         bookings_to_save = {}
@@ -135,8 +135,9 @@ class BookingSystem:
 
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
-            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) - dt
-            seconds = time_until_tomorrow.seconds + 60
+            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) + datetime.timedelta(
+                hours=1) - dt
+            seconds = time_until_tomorrow.seconds + 15
             hours = seconds // 3600
             minutes = (seconds // 60) % 60
             print(f"Success in bookings at {dt.hour}h{dt.minute}m, sleeping {hours}h{minutes}m until tomorrow")
