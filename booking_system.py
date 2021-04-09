@@ -126,8 +126,8 @@ class BookingSystem:
                         print(f"{day} at {class_candidate['classTime']}")
                     print("\n")
 
-            time_to_sleep = lag_between_user_bookings + random.randint(30, 90)
-            time.sleep(time_to_sleep)
+                time_to_sleep = lag_between_user_bookings + random.randint(30, 90)
+                time.sleep(time_to_sleep)
 
     def run(self):
         while True:
