@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import time
 from typing import List, Tuple
 
@@ -20,6 +21,7 @@ class BookingSystem:
         auth_users = 0
         auth_users_list = []
 
+        lag = 30
         for user in self.booking_users:
             try:
                 user.auth()
@@ -29,6 +31,8 @@ class BookingSystem:
                 print(f"Authentication success for user {user.name}")
             except requests.exceptions.HTTPError:
                 print(f"Authentication failed for user {user.name}")
+            time_to_sleep = lag + random.randint(30, 90)
+            time.sleep(time_to_sleep)
 
         return auth_users, auth_users_list
 
@@ -43,9 +47,9 @@ class BookingSystem:
                 self.booking_users = auth_user_list
                 break
             else:
-                print("Failed authentication for all users. Sleeping 10 mins")
+                print("Failed authentication for all users. Sleeping 30 mins")
 
-            time.sleep(600)
+            time.sleep(1800)
 
     def search_target_date(self, dt, target_last_date: str):
         print(f"Start searching for date {target_last_date} at {dt.hour}h{dt.minute}m")
@@ -101,6 +105,7 @@ class BookingSystem:
             json.dump(bookings_to_save, outfile)
 
     def do_bookings(self):
+        lag_between_user_bookings = 60
         for user in self.booking_users:
             print("-------------------------------------------------------------------------")
             print(f"Start bookings for user {user.name}")
@@ -120,6 +125,9 @@ class BookingSystem:
                         user.book_class(class_candidate["_id"])
                         print(f"{day} at {class_candidate['classTime']}")
                     print("\n")
+
+            time_to_sleep = lag_between_user_bookings + random.randint(30, 90)
+            time.sleep(time_to_sleep)
 
     def run(self):
         while True:
