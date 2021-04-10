@@ -74,12 +74,13 @@ class BookingUser:
 
             for candidate in candidates_class:
                 day = candidate[0]
-                hour = candidate[2]
+                candidate_time = self._parse_hour(candidate[2])
                 required_spots = 1 + len(candidate[3])
 
                 for real_class in filtered_bookings[day]["classes"]:
                     available_spots = real_class["limit"] - real_class["joinedUsers"]
-                    if real_class["classTime"] == hour and available_spots >= required_spots and real_class["active"]:
+                    real_class_time = self._parse_hour(real_class["classTime"])
+                    if  real_class_time == candidate_time and available_spots >= required_spots and real_class["active"]:
                         classes_to_schedule.append(real_class)
 
             if len(classes_to_schedule) > 0:
@@ -136,14 +137,7 @@ class BookingUser:
                 candidate_weekday = candidate[1]
                 candidate_hour = candidate[2]
                 candidate_friends = candidate[3]
-
-                hour = candidate_hour.split()
-                hour_int = int(hour[0].split(":")[0])
-                minutes_int = int(hour[0].split(":")[1])
-                if hour[1] == "pm":
-                    hour_int = hour_int + 12
-                preference_datetime = parser.parse(candidate_date) + datetime.timedelta(hours=hour_int,
-                                                                                        minutes=minutes_int)
+                preference_datetime = parser.parse(candidate_date) + self._parse_hour(candidate_hour)
 
                 if now < preference_datetime and candidate_date not in scheduled_days:
                     filtered_candidates[preference_class].append((candidate_date, candidate_weekday,
@@ -165,3 +159,14 @@ class BookingUser:
         r.raise_for_status()
         response = r.json()
         self.headers["Authorization"] = f"Bearer {response['token']}"
+
+    def _parse_hour(self, hour_minutes: str):
+        hour = hour_minutes.split()
+        hour_int =  int(hour[0].split(":")[0])
+        minutes_int = int(hour[0].split(":")[1])
+
+        time_of_day = hour[1].lower()
+        if time_of_day == 'pm':
+            hour_int = hour_int + 12
+
+        return datetime.timedelta(hours=hour_int, minutes=minutes_int)
