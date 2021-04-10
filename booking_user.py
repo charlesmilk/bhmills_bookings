@@ -49,7 +49,12 @@ class BookingUser:
         scheduled_classes = self.get_scheduled_classes()
         candidates = self._filter_days_to_schedule(candidate_days, scheduled_classes)
 
-        return candidates
+        candidates_filter = {}
+        for class_type, class_data in candidates.items():
+            if len(class_data) > 0:
+                candidates_filter[class_type] = class_data
+
+        return candidates_filter
 
     def get_classes_to_schedule(self, candidates: Dict[str, List[Tuple[Union[str, List[str]]]]]) -> Dict[
         str, List[Dict[str, Any]]]:
@@ -98,15 +103,16 @@ class BookingUser:
 
         not_available_classes = {}
         for class_type, class_data in candidates.items():
-            if class_type in available_dates.keys():
-                classes_not_in = []
-                for class_tuple in class_data:
-                    if class_tuple[0] not in available_dates[class_type]:
-                        classes_not_in.append(class_tuple)
-                if len(classes_not_in) > 0:
-                    not_available_classes[class_type] = classes_not_in
-            else:
-                not_available_classes[class_type] = class_data
+            if len(class_data) > 0:
+                if class_type in available_dates.keys():
+                    classes_not_in = []
+                    for class_tuple in class_data:
+                        if class_tuple[0] not in available_dates[class_type]:
+                            classes_not_in.append(class_tuple)
+                    if len(classes_not_in) > 0:
+                        not_available_classes[class_type] = classes_not_in
+                else:
+                    not_available_classes[class_type] = class_data
 
         return not_available_classes
 
