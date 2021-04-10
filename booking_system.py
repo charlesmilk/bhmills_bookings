@@ -107,11 +107,16 @@ class BookingSystem:
             classes_to_schedule = user.get_classes_to_schedule(candidates)
 
             len_candidates = sum([len(x) for _, x in candidates.items()])
-            if len(classes_to_schedule) == 0 and len_candidates > 0:
-                print(f"No classes available for user {user.name} - tried to book {candidates}")
-            elif len(classes_to_schedule) == 0:
+            len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
+            if len_classes_to_schedule == 0 and len_candidates > 0:
+                print(f"All the candidate classes for user {user.name} are not available - tried to book {candidates}")
+            elif len_candidates == 0:
                 print(f"All the classes are already booked for user {user.name}")
             else:
+                if len_candidates > len_classes_to_schedule:
+                    not_available_classes = user.get_not_available_classes(candidates, classes_to_schedule)
+                    print(f"The classes that we were not able to book were: {not_available_classes}")
+
                 for class_type, classes in classes_to_schedule.items():
                     print(f"Booking class type {class_type}")
                     for class_candidate in classes:
