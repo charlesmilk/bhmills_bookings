@@ -52,28 +52,33 @@ class BookingSystem:
         start = time.time()
         user = self.booking_users[0]
         while True:
-            last_dates_available = []
-            for class_type in user.classes:
-                url = os.path.join(user.base_url, user.classes_url, class_type)
-                r = requests.get(url, headers=user.headers, timeout=user.timeout)
-                r.raise_for_status()
+            try:
+                last_dates_available = []
+                for class_type in user.classes:
+                    url = os.path.join(user.base_url, user.classes_url, class_type)
+                    r = requests.get(url, headers=user.headers, timeout=user.timeout)
+                    r.raise_for_status()
 
-                classes = r.json()
-                last_date = parser.parse(classes[-1]["_id"])
-                last_dates_available.append(datetime.datetime.strftime(last_date, "%Y-%m-%d"))
+                    classes = r.json()
+                    last_date = parser.parse(classes[-1]["_id"])
+                    last_dates_available.append(datetime.datetime.strftime(last_date, "%Y-%m-%d"))
 
-            dt = datetime.datetime.now()
-            if target_last_date in last_dates_available:
-                print(f"Found target date available at {dt.hour}h{dt.minute}m")
-                break
-            else:
-                print(f"Target date not available at {dt.hour}h{dt.minute}m. Sleeping 1min.")
-                end = time.time()
-                if end - start >= 10800:
-                    print("3 hours have passed since we started searching for the target date. Re-authenticating.")
-                    self.enforce_auth()
-                    start = time.time()
-                time.sleep(60)
+                dt = datetime.datetime.now()
+                if target_last_date in last_dates_available:
+                    print(f"Found target date available at {dt.hour}h{dt.minute}m")
+                    break
+                else:
+                    print(f"Target date not available at {dt.hour}h{dt.minute}m. Sleeping 10min.")
+                    end = time.time()
+                    if end - start >= 10800:
+                        print("3 hours have passed since we started searching for the target date. Re-authenticating.")
+                        self.enforce_auth()
+                        start = time.time()
+                    time.sleep(600)
+            except requests.exceptions.ConnectionError:
+                print("Connection error. Sleeping 10min.")
+                time.sleep(600)
+
 
     def save_user_bookings(self):
         bookings_to_save = {}
