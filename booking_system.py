@@ -47,7 +47,8 @@ class BookingSystem:
 
             time.sleep(1800)
 
-    def search_target_date(self, dt, target_last_date: str):
+    def search_target_date(self, target_last_date: str):
+        dt = datetime.datetime.now()
         print(f"Start searching for date {target_last_date} at {dt}")
         start = time.time()
         user = self.booking_users[0]
@@ -154,7 +155,7 @@ class BookingSystem:
             print(f"Start bookings for {dt.day}/{dt.month}/{dt.year} at {dt}s")
 
             self.enforce_auth()
-            self.search_target_date(dt, target_last_date)
+            self.search_target_date(target_last_date)
             self.do_bookings()
             self.save_user_bookings()
             self.print_user_missed_classes()
