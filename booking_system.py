@@ -48,7 +48,7 @@ class BookingSystem:
             time.sleep(1800)
 
     def search_target_date(self, dt, target_last_date: str):
-        print(f"Start searching for date {target_last_date} at {dt.hour}h{dt.minute}m")
+        print(f"Start searching for date {target_last_date} at {dt}")
         start = time.time()
         user = self.booking_users[0]
         while True:
@@ -65,10 +65,10 @@ class BookingSystem:
 
                 dt = datetime.datetime.now()
                 if target_last_date in last_dates_available:
-                    print(f"Found target date available at {dt.hour}h{dt.minute}m")
+                    print(f"Found target date available at {dt}")
                     break
                 else:
-                    print(f"Target date not available at {dt.hour}h{dt.minute}m. Sleeping 10min.")
+                    print(f"Target date not available at {dt}. Sleeping 10min.")
                     end = time.time()
                     if end - start >= 10800:
                         print("3 hours have passed since we started searching for the target date. Re-authenticating.")
@@ -107,40 +107,52 @@ class BookingSystem:
     def do_bookings(self):
         for user in self.booking_users:
             print("-------------------------------------------------------------------------")
-            print(f"Start bookings for user {user.name}")
+            dt = datetime.datetime.now()
+            print(f"Start bookings for user {user.name} at {dt}")
             candidates = user.generate_candidates()
             classes_to_schedule = user.get_classes_to_schedule(candidates)
 
             len_candidates = sum([len(x) for _, x in candidates.items()])
             len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
             if len_classes_to_schedule == 0 and len_candidates > 0:
-                print(f"All the candidate classes for user {user.name} are not available - tried to book {candidates}")
+                print(f"All the candidate classes for user {user.name} are not available")
             elif len_candidates == 0:
                 print(f"All the classes are already booked for user {user.name}")
             else:
-                if len_candidates > len_classes_to_schedule:
-                    not_available_classes = user.get_not_available_classes(candidates, classes_to_schedule)
-                    print(f"The classes that we were not able to book were: {not_available_classes}")
-
                 for class_type, classes in classes_to_schedule.items():
-                    print(f"Booking class type {class_type}")
+                    dt = datetime.datetime.now()
+                    print(f"Booking class type {class_type} at {dt}s")
                     for class_candidate in classes:
                         day = parser.parse(class_candidate["classDate"]).strftime("%Y-%m-%d")
                         user.book_class(class_candidate["_id"])
                         print(f"{day} at {class_candidate['classTime']}")
                     print("\n")
 
+    def print_user_missed_classes(self):
+        print("-------------------------------------------------------------------------")
+        print("Printing missed classes")
+        for user in self.booking_users:
+            candidates = user.generate_candidates()
+            classes_to_schedule = user.get_classes_to_schedule(candidates)
+            len_candidates = sum([len(x) for _, x in candidates.items()])
+            len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
+
+            if len_candidates > len_classes_to_schedule:
+                not_available_classes = user.get_not_available_classes(candidates, classes_to_schedule)
+                print(f"\nThe classes that we were not able to book for user {user.name} were: {not_available_classes}")
+
     def run(self):
         while True:
             dt = datetime.datetime.now()
             target_last_date = dt + datetime.timedelta(days=7)
             target_last_date = datetime.datetime.strftime(target_last_date, "%Y-%m-%d")
-            print(f"Start bookings for {dt.day}/{dt.month}/{dt.year}")
+            print(f"Start bookings for {dt.day}/{dt.month}/{dt.year} at {dt}s")
 
             self.enforce_auth()
             self.search_target_date(dt, target_last_date)
             self.do_bookings()
             self.save_user_bookings()
+            self.print_user_missed_classes()
 
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
@@ -149,5 +161,5 @@ class BookingSystem:
             seconds = time_until_tomorrow.seconds + 15
             hours = seconds // 3600
             minutes = (seconds // 60) % 60
-            print(f"Success in bookings at {dt.hour}h{dt.minute}m, sleeping {hours}h{minutes}m until tomorrow")
+            print(f"Success in bookings at {dt}, sleeping {hours}h{minutes}m until tomorrow")
             time.sleep(seconds)
