@@ -68,17 +68,22 @@ class BookingSystem:
                     print(f"Found target date available at {dt}")
                     break
                 else:
-                    print(f"Target date not available at {dt}. Sleeping 10min.")
+                    next_time = datetime.datetime.combine(dt,
+                                                          datetime.time(hour=dt.hour, minute=dt.minute + 1))
+                    diff = (next_time - dt)
+                    secs = diff.total_seconds()
+                    print(f"Target date not available at {dt}. Sleeping {secs} seconds.")
+
                     end = time.time()
                     if end - start >= 10800:
                         print("3 hours have passed since we started searching for the target date. Re-authenticating.")
                         self.enforce_auth()
                         start = time.time()
-                    time.sleep(600)
-            except requests.exceptions.ConnectionError:
-                print("Connection error. Sleeping 10min.")
+                    time.sleep(secs)
+            except requests.exceptions.HTTPError:
+                print("Connection error searching for date. Sleeping 10min.")
                 time.sleep(600)
-
+                self.enforce_auth()
 
     def save_user_bookings(self):
         bookings_to_save = {}
@@ -157,9 +162,7 @@ class BookingSystem:
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
             time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) + datetime.timedelta(
-                hours=1) - dt
-            seconds = time_until_tomorrow.seconds + 15
-            hours = seconds // 3600
-            minutes = (seconds // 60) % 60
-            print(f"Success in bookings at {dt}, sleeping {hours}h{minutes}m until tomorrow")
+                minutes=55) - dt
+            seconds = time_until_tomorrow.seconds
+            print(f"Success in bookings at {dt}, sleeping {time_until_tomorrow} until tomorrow")
             time.sleep(seconds)
