@@ -152,14 +152,16 @@ class BookingUser:
         for preference_class, preferences in self.user_preferences.items():
             for day_p in preferences:
                 if day_p[0] in candidate_days.keys():
-                    candidate = [(class_date, day_p[0], day_p[1], day_p[2])
-                                 for class_date in candidate_days[day_p[0]]]
+                    class_dates = candidate_days[day_p[0]]
+                    class_hours = day_p[1]
+                    candidate = [(class_date, day_p[0], hour, day_p[2])
+                                 for hour in class_hours for class_date in class_dates]
                     class_candidates[preference_class].extend(candidate)
 
         # after filtering candidates using the preferences, filter the ones already scheduled
         filtered_candidates = {key: [] for key in class_candidates.keys()}
         for preference_class, preferences in class_candidates.items():
-            scheduled_days = [day["classDate"][0] for day in scheduled_classes[preference_class]]
+            scheduled_days = {(day["classDate"][0], day["classTime"].lower())  for day in scheduled_classes[preference_class]}
             for candidate in preferences:
                 candidate_date = candidate[0]
                 candidate_weekday = candidate[1]
@@ -167,7 +169,7 @@ class BookingUser:
                 candidate_friends = candidate[3]
                 preference_datetime = parser.parse(candidate_date) + self._parse_hour(candidate_hour)
 
-                if now < preference_datetime and candidate_date not in scheduled_days:
+                if now < preference_datetime and (candidate_date, candidate_hour) not in scheduled_days:
                     filtered_candidates[preference_class].append((candidate_date, candidate_weekday,
                                                                   candidate_hour, candidate_friends))
 
