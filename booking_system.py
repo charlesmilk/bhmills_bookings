@@ -69,8 +69,14 @@ class BookingSystem:
                     print(f"Found target date available at {dt}")
                     break
                 else:
-                    next_time = datetime.datetime.combine(dt,
-                                                          datetime.time(hour=dt.hour, minute=dt.minute + 1))
+                    mins = dt.minute + 1
+                    hour = dt.hour
+                    if mins >= 60:
+                        hour = hour + 1
+                        mins = 0
+
+                    next_time = datetime.datetime.combine(dt,datetime.time(hour=hour, minute=mins))
+                    
                     diff = (next_time - dt)
                     secs = diff.total_seconds()
                     print(f"Target date not available at {dt}. Sleeping {secs} seconds.")
