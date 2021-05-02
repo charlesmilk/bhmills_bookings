@@ -161,7 +161,8 @@ class BookingUser:
         # after filtering candidates using the preferences, filter the ones already scheduled
         filtered_candidates = {key: [] for key in class_candidates.keys()}
         for preference_class, preferences in class_candidates.items():
-            scheduled_days = {(day["classDate"][0], day["classTime"].lower())  for day in scheduled_classes[preference_class]}
+            scheduled_days = {(day["classDate"][0], day["classTime"].lower()) for day in
+                              scheduled_classes[preference_class]}
             for candidate in preferences:
                 candidate_date = candidate[0]
                 candidate_weekday = candidate[1]
