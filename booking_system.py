@@ -109,24 +109,26 @@ class BookingSystem:
         with open(filename, 'w') as outfile:
             json.dump(bookings_to_save, outfile)
 
-    def generate_classes(self):
+    def generate_candidates(self):
         for user in self.booking_users:
-            user.update_candidates_classes()
+            user.update_candidates()
 
     def do_bookings(self):
         for user in self.booking_users:
             print("-------------------------------------------------------------------------")
             dt = datetime.datetime.now()
             print(f"Start bookings for user {user.name} at {dt}")
+            candidates = user.candidates
+            classes_to_schedule = user.get_classes_to_schedule(candidates)
 
-            len_candidates = sum([len(x) for _, x in user.candidates.items()])
-            len_classes_to_schedule = sum([len(x) for _, x in user.classes_to_schedule.items()])
+            len_candidates = sum([len(x) for _, x in candidates.items()])
+            len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
             if len_classes_to_schedule == 0 and len_candidates > 0:
                 print(f"All the candidate classes for user {user.name} are not available")
             elif len_candidates == 0:
                 print(f"All the classes are already booked for user {user.name}")
             else:
-                for class_type, classes in user.classes_to_schedule.items():
+                for class_type, classes in classes_to_schedule.items():
                     dt = datetime.datetime.now()
                     print(f"Booking class type {class_type} at {dt}s")
                     for class_candidate in classes:
@@ -156,7 +158,7 @@ class BookingSystem:
             print(f"Start bookings for {dt.day}/{dt.month}/{dt.year} at {dt}s")
 
             self.enforce_auth()
-            self.generate_classes()
+            self.generate_candidates()
             self.search_target_date(target_last_date)
             self.do_bookings()
             self.save_user_bookings()
@@ -164,8 +166,7 @@ class BookingSystem:
 
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
-            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) + datetime.timedelta(
-                milliseconds=500) - dt
+            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) - dt
             seconds = time_until_tomorrow.seconds
             print(f"Success in bookings at {dt}, sleeping {time_until_tomorrow} until tomorrow")
             time.sleep(seconds)

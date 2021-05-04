@@ -20,7 +20,6 @@ class BookingUser:
         self.user_id = None
         self.classes = ["swimmingClass", "gymClass", "tennisClass"]
         self.candidates = []
-        self.classes_to_schedule = []
 
     def get_scheduled_classes(self) -> Dict[str, List[Dict[str, Any]]]:
         # return scheduled classes for a given user
@@ -44,12 +43,9 @@ class BookingUser:
 
         return booked_classes
 
-    def update_candidates_classes(self):
+    def update_candidates(self):
         self.candidates = []
-        self.classes_to_schedule = []
-
         self.candidates = self.generate_candidates()
-        self.classes_to_schedule = self.get_classes_to_schedule(self.candidates)
 
     def generate_candidates(self) -> Dict[str, List[Tuple[Union[str, List[str]]]]]:
         # returns the classes that the user wants to book: has preference AND it is not in its list of scheduled class
