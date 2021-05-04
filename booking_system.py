@@ -69,7 +69,7 @@ class BookingSystem:
                     print(f"Found target date available at {dt}")
                     break
                 else:
-                    next_time = datetime.datetime.combine(dt,datetime.time(hour=dt.hour+1))
+                    next_time = datetime.datetime.combine(dt, datetime.time(hour=dt.hour + 1))
                     diff = (next_time - dt)
                     secs = diff.total_seconds()
                     print(f"Target date not available at {dt}. Sleeping {secs} seconds.")
@@ -164,7 +164,8 @@ class BookingSystem:
 
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
-            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) - dt
+            time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) + datetime.timedelta(
+                milliseconds=500) - dt
             seconds = time_until_tomorrow.seconds
             print(f"Success in bookings at {dt}, sleeping {time_until_tomorrow} until tomorrow")
             time.sleep(seconds)
