@@ -61,8 +61,8 @@ class BookingUser:
 
         return candidates_filter
 
-    def get_classes_to_schedule(self, class_type: str, candidates_class: List[Tuple[Union[str, List[str]]]]) -> List[
-        Dict[str, Any]]:
+    def get_classes_to_schedule(self, class_type: str, candidates_class: List[Tuple[Union[str, List[str]]]]) -> Tuple[List[
+        Dict[str, Any]], List[Tuple[Union[str, List[str]]]]]:
         # receives the candidates already filtered by the user preferences and filtered by what we already scheduled
         # it then searches for availability for those candidates, if found returns that class information
 
@@ -80,6 +80,7 @@ class BookingUser:
             if d in days_to_filter:
                 filtered_bookings[d] = b
 
+        classes_cancelled = []
         for candidate in candidates_class:
             day = candidate[0]
             candidate_time = self._parse_hour(candidate[2])
@@ -88,11 +89,24 @@ class BookingUser:
             for real_class in filtered_bookings[day]["classes"]:
                 available_spots = real_class["limit"] - real_class["joinedUsers"]
                 real_class_time = self._parse_hour(real_class["classTime"])
-                if real_class_time == candidate_time and available_spots >= required_spots and real_class["active"]:
-                    real_class["classDate"] = parser.parse(real_class["classDate"]).strftime("%Y-%m-%d")
-                    classes_to_schedule.append(real_class)
+                if real_class_time > candidate_time:
+                    break
 
-        return classes_to_schedule
+                if real_class_time == candidate_time and available_spots >= required_spots and real_class["active"]:
+                    cancel = False
+                    for attendance in real_class["attendanceList"]:
+                        if attendance["user"] == self.user_id and attendance["status"] == "cancelled":
+                            print(
+                                f"The {class_type} for {day} at {candidate[2]} "
+                                f"was cancelled by user - remove from candidates")
+                            cancel = True
+                            classes_cancelled.append(candidate)
+                            break
+                    if not cancel:
+                        real_class["classDate"] = parser.parse(real_class["classDate"]).strftime("%Y-%m-%d")
+                        classes_to_schedule.append(real_class)
+
+        return classes_to_schedule, classes_cancelled
 
     def book_class(self, class_id: str):
         url = os.path.join(self.base_url, "api/class", class_id)

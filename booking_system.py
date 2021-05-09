@@ -125,16 +125,21 @@ class BookingSystem:
                 print(f"All the classes are already booked for user {user.name}")
             else:
                 for candidate_class, candidates_info in candidates.items():
-                    classes_to_schedule = user.get_classes_to_schedule(candidate_class, candidates_info)
+                    classes_to_schedule, cancelled_classes = user.get_classes_to_schedule(candidate_class,
+                                                                                          candidates_info)
+                    candidates_info = [c for c in candidates_info if c not in cancelled_classes]
                     print(f"\nCandidates for {candidate_class}: {candidates_info}")
-                    if len(classes_to_schedule) == 0:
-                        print(f"All of those classes are not available")
+
+                    if len(candidates_info) == 0:
+                        print("No candidates available")
+                    elif len(classes_to_schedule) == 0:
+                        print("All of those classes are not available")
                     else:
                         if len(classes_to_schedule) < len(candidates_info):
                             candidates_temp = {(c[0], c[2]) for c in candidates_info}
                             scheduled_temp = {(s["classDate"], s["classTime"].lower()) for s in classes_to_schedule}
                             print(
-                                f"Some of those classes are not available: {candidates_temp.difference(scheduled_temp)}")
+                                f"Some classes are not available: {candidates_temp.difference(scheduled_temp)}")
 
                         dt = datetime.datetime.now()
                         print(f"Booking class type {candidate_class} at {dt}s")
