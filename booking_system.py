@@ -164,7 +164,7 @@ class BookingSystem:
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)
             time_until_tomorrow = datetime.datetime.combine(tomorrow, datetime.time.min) + datetime.timedelta(
-                milliseconds=500) - dt
+                minutes=55) - dt
             seconds = time_until_tomorrow.seconds
             print(f"Success in bookings at {dt}, sleeping {time_until_tomorrow} until tomorrow")
             time.sleep(seconds)
