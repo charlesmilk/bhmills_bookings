@@ -119,36 +119,29 @@ class BookingSystem:
             dt = datetime.datetime.now()
             print(f"Start bookings for user {user.name} at {dt}")
             candidates = user.candidates
-            classes_to_schedule = user.get_classes_to_schedule(candidates)
-
             len_candidates = sum([len(x) for _, x in candidates.items()])
-            len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
-            if len_classes_to_schedule == 0 and len_candidates > 0:
-                print(f"All the candidate classes for user {user.name} are not available")
-            elif len_candidates == 0:
+
+            if len_candidates == 0:
                 print(f"All the classes are already booked for user {user.name}")
             else:
-                for class_type, classes in classes_to_schedule.items():
-                    dt = datetime.datetime.now()
-                    print(f"Booking class type {class_type} at {dt}s")
-                    for class_candidate in classes:
-                        day = parser.parse(class_candidate["classDate"]).strftime("%Y-%m-%d")
-                        user.book_class(class_candidate["_id"])
-                        print(f"{day} at {class_candidate['classTime']}")
-                    print("\n")
+                for candidate_class, candidates_info in candidates.items():
+                    classes_to_schedule = user.get_classes_to_schedule(candidate_class, candidates_info)
+                    print(f"\nCandidates for {candidate_class}: {candidates_info}")
+                    if len(classes_to_schedule) == 0:
+                        print(f"All of those classes are not available")
+                    else:
+                        if len(classes_to_schedule) < len(candidates_info):
+                            candidates_temp = {(c[0], c[2]) for c in candidates_info}
+                            scheduled_temp = {(s["classDate"], s["classTime"].lower()) for s in classes_to_schedule}
+                            print(
+                                f"Some of those classes are not available: {candidates_temp.difference(scheduled_temp)}")
 
-    def print_user_missed_classes(self):
-        print("-------------------------------------------------------------------------")
-        print("Printing missed classes")
-        for user in self.booking_users:
-            candidates = user.generate_candidates()
-            classes_to_schedule = user.get_classes_to_schedule(candidates)
-            len_candidates = sum([len(x) for _, x in candidates.items()])
-            len_classes_to_schedule = sum([len(x) for _, x in classes_to_schedule.items()])
-
-            if len_candidates > len_classes_to_schedule:
-                not_available_classes = user.get_not_available_classes(candidates, classes_to_schedule)
-                print(f"\nThe classes that we were not able to book for user {user.name} were: {not_available_classes}")
+                        dt = datetime.datetime.now()
+                        print(f"Booking class type {candidate_class} at {dt}s")
+                        for class_candidate in classes_to_schedule:
+                            day = parser.parse(class_candidate["classDate"]).strftime("%Y-%m-%d")
+                            user.book_class(class_candidate["_id"])
+                            print(f"{day} at {class_candidate['classTime']}")
 
     def run(self):
         while True:
@@ -162,7 +155,6 @@ class BookingSystem:
             self.search_target_date(target_last_date)
             self.do_bookings()
             self.save_user_bookings()
-            self.print_user_missed_classes()
 
             dt = datetime.datetime.now()
             tomorrow = dt + datetime.timedelta(days=1)

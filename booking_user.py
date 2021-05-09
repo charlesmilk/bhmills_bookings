@@ -61,65 +61,38 @@ class BookingUser:
 
         return candidates_filter
 
-    def get_classes_to_schedule(self, candidates: Dict[str, List[Tuple[Union[str, List[str]]]]]) -> Dict[
-        str, List[Dict[str, Any]]]:
+    def get_classes_to_schedule(self, class_type: str, candidates_class: List[Tuple[Union[str, List[str]]]]) -> List[
+        Dict[str, Any]]:
         # receives the candidates already filtered by the user preferences and filtered by what we already scheduled
         # it then searches for availability for those candidates, if found returns that class information
-        global_classes_to_schedule = {}
-        for class_type, candidates_class in candidates.items():
-            candidates_class = candidates[class_type]
-            url = os.path.join(self.base_url, self.classes_url, class_type)
-            r = requests.get(url, headers=self.headers, timeout=self.timeout)
-            r.raise_for_status()
 
-            bookings = r.json()
-            days_to_filter = [d[0] for d in candidates_class]
+        url = os.path.join(self.base_url, self.classes_url, class_type)
+        r = requests.get(url, headers=self.headers, timeout=self.timeout)
+        r.raise_for_status()
 
-            filtered_bookings = {}
-            classes_to_schedule = []
-            for b in bookings:
-                d = parser.parse(b["_id"]).strftime("%Y-%m-%d")
-                if d in days_to_filter:
-                    filtered_bookings[d] = b
+        bookings = r.json()
+        days_to_filter = [d[0] for d in candidates_class]
 
-            for candidate in candidates_class:
-                day = candidate[0]
-                candidate_time = self._parse_hour(candidate[2])
-                required_spots = 1 + len(candidate[3])
+        filtered_bookings = {}
+        classes_to_schedule = []
+        for b in bookings:
+            d = parser.parse(b["_id"]).strftime("%Y-%m-%d")
+            if d in days_to_filter:
+                filtered_bookings[d] = b
 
-                for real_class in filtered_bookings[day]["classes"]:
-                    available_spots = real_class["limit"] - real_class["joinedUsers"]
-                    real_class_time = self._parse_hour(real_class["classTime"])
-                    if real_class_time == candidate_time and available_spots >= required_spots and real_class["active"]:
-                        real_class["classDate"] = parser.parse(real_class["classDate"]).strftime("%Y-%m-%d")
-                        classes_to_schedule.append(real_class)
+        for candidate in candidates_class:
+            day = candidate[0]
+            candidate_time = self._parse_hour(candidate[2])
+            required_spots = 1 + len(candidate[3])
 
-            if len(classes_to_schedule) > 0:
-                global_classes_to_schedule[class_type] = classes_to_schedule
+            for real_class in filtered_bookings[day]["classes"]:
+                available_spots = real_class["limit"] - real_class["joinedUsers"]
+                real_class_time = self._parse_hour(real_class["classTime"])
+                if real_class_time == candidate_time and available_spots >= required_spots and real_class["active"]:
+                    real_class["classDate"] = parser.parse(real_class["classDate"]).strftime("%Y-%m-%d")
+                    classes_to_schedule.append(real_class)
 
-        return global_classes_to_schedule
-
-    def get_not_available_classes(self, candidates: Dict[str, List[Tuple[Union[str, List[str]]]]],
-                                  classes_to_schedule: Dict[str, List[Dict[str, Any]]]):
-        available_dates = {class_type: [] for class_type, _ in classes_to_schedule.items()}
-        for class_type, classes_data in classes_to_schedule.items():
-            for real_class in classes_data:
-                available_dates[class_type].append(real_class["classDate"])
-
-        not_available_classes = {}
-        for class_type, class_data in candidates.items():
-            if len(class_data) > 0:
-                if class_type in available_dates.keys():
-                    classes_not_in = []
-                    for class_tuple in class_data:
-                        if class_tuple[0] not in available_dates[class_type]:
-                            classes_not_in.append(class_tuple)
-                    if len(classes_not_in) > 0:
-                        not_available_classes[class_type] = classes_not_in
-                else:
-                    not_available_classes[class_type] = class_data
-
-        return not_available_classes
+        return classes_to_schedule
 
     def book_class(self, class_id: str):
         url = os.path.join(self.base_url, "api/class", class_id)
