@@ -111,39 +111,42 @@ class BookingSystem:
                 time.sleep(30)
                 dt = datetime.datetime.now()
             except requests.exceptions.ConnectionError:
-                self.logger.error("Time out detected")
+                self.logger.error("Time out detected, sleeping 10 minutes")
+                time.sleep(600)
                 self.enforce_auth()
                 continue
 
         self.logger.info("Stopping crawler")
 
     def run(self, offset_tomorrow: int):
-        try:
             while True:
-                dt = datetime.datetime.now()
-                tomorrow = datetime.datetime.combine(dt + datetime.timedelta(days=1), datetime.time.min)
-                tomorrow = tomorrow + datetime.timedelta(minutes=offset_tomorrow)
-                target_last_date = dt + datetime.timedelta(days=7)
-                target_last_date = datetime.datetime.strftime(target_last_date, "%Y-%m-%d")
+                try:
+                    dt = datetime.datetime.now()
+                    tomorrow = datetime.datetime.combine(dt + datetime.timedelta(days=1), datetime.time.min)
+                    tomorrow = tomorrow + datetime.timedelta(minutes=offset_tomorrow)
+                    target_last_date = dt + datetime.timedelta(days=7)
+                    target_last_date = datetime.datetime.strftime(target_last_date, "%Y-%m-%d")
 
-                self.enforce_auth()
-                candidates = self.user.generate_candidates()
-                self.search_target_date(target_last_date)
-                classes_to_schedule, candidates_not_available = self.user.get_classes_to_schedule(candidates)
+                    self.enforce_auth()
+                    candidates = self.user.generate_candidates()
+                    self.search_target_date(target_last_date)
+                    classes_to_schedule, candidates_not_available = self.user.get_classes_to_schedule(candidates)
 
-                if len(classes_to_schedule) > 0:
-                    self.do_bookings(classes_to_schedule)
-                if len(candidates_not_available) > 0:
-                    self.crawler(candidates_not_available, tomorrow)
+                    if len(classes_to_schedule) > 0:
+                        self.do_bookings(classes_to_schedule)
+                    if len(candidates_not_available) > 0:
+                        self.crawler(candidates_not_available, tomorrow)
 
-                dt = datetime.datetime.now()
-                if dt < tomorrow:
-                    time_until_tomorrow = tomorrow - dt
-                    self.logger.info(f"There are no candidates to book - sleep {time_until_tomorrow} until next day")
-                    time.sleep(time_until_tomorrow.seconds)
-        except Exception as e:
-            self.logger.exception(e)
-            raise e
+                    dt = datetime.datetime.now()
+                    if dt < tomorrow:
+                        time_until_tomorrow = tomorrow - dt
+                        self.logger.info(
+                            f"There are no candidates to book - sleep {time_until_tomorrow} until next day")
+                        time.sleep(time_until_tomorrow.seconds)
+                except Exception as e:
+                    self.logger.exception(e)
+                    time.sleep(600)
+                    continue
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
