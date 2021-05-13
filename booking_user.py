@@ -97,6 +97,11 @@ class BookingUser:
                                 cancel = True
                                 candidates_scheduled.append(candidate)
                                 break
+
+                        if not real_class["active"]:
+                            self.logger.info(f"The {self.class_type} for {day} at {candidate[2]} is not active - skip")
+                            candidates_scheduled.append(candidate)
+
                         if not cancel and available_spots >= required_spots and real_class["active"]:
                             real_class["classDate"] = parser.parse(real_class["classDate"]).strftime("%Y-%m-%d")
                             classes_to_schedule.append(real_class)
