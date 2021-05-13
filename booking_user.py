@@ -4,6 +4,8 @@ from typing import Dict, List, Any, Tuple, Union
 
 import requests
 from dateutil import parser
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 
 class BookingUser:
@@ -55,7 +57,12 @@ class BookingUser:
         # receives the candidates already filtered by the user preferences and filtered by what we already scheduled
         # it then searches for availability for those candidates, if found returns that class information
         url = os.path.join(self.base_url, self.classes_url, self.class_type)
-        r = requests.get(url, headers=self.headers, timeout=self.timeout)
+
+        s = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[ 502, 503, 504 ])
+        s.mount('http://', HTTPAdapter(max_retries=retries))
+
+        r = s.get(url, headers=self.headers, timeout=self.timeout)
         r.raise_for_status()
         bookings = r.json()
 
