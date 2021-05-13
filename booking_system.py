@@ -110,8 +110,8 @@ class BookingSystem:
 
                 time.sleep(30)
                 dt = datetime.datetime.now()
-            except requests.exceptions.ConnectionError:
-                self.logger.error("Time out detected, sleeping 10 minutes")
+            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+                self.logger.error("Time out or connection error detected, sleeping 10 minutes")
                 time.sleep(600)
                 self.enforce_auth()
                 continue

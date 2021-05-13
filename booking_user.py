@@ -19,7 +19,7 @@ class BookingUser:
         self.auth_url = "auth/local"
         self.classes_url = "api/class/gym/5fd7cff72eb93d371e0aa7de"
         self.headers = {"Content-Type": "application/json"}
-        self.timeout = 3.0
+        self.timeout = 5.0
         self.user_id = None
         self.logger = logger
 
