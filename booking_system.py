@@ -93,35 +93,27 @@ class BookingSystem:
 
     def crawler(self, candidates, tomorrow):
         dt = datetime.datetime.now()
-        start = time.time()
         start_logging = time.time()
         self.logger.info(f"There are candidates not available: {candidates}")
         self.logger.info("Crawler started")
-        try:
-            while dt < tomorrow and len(candidates) > 0:
-                classes_to_schedule, candidates_not_scheduled = self.user.get_classes_to_schedule(candidates)
+
+        while dt < tomorrow and len(candidates) > 0:
+            try:
+                classes_to_schedule, candidates = self.user.get_classes_to_schedule(candidates)
                 if len(classes_to_schedule) > 0:
                     self.do_bookings(classes_to_schedule)
-                    candidates = candidates_not_scheduled
 
-                if len(candidates_not_scheduled) > 0:
-                    candidates = candidates_not_scheduled
-                    end = time.time()
-                    end_logging = time.time()
+                end_logging = time.time()
+                if (end_logging - start_logging) // 3600 > 0:
+                    self.logger.info(f"After 1h there are still classes not found. Continue searching for {candidates}")
+                    start_logging = time.time()
 
-                    if end - start >= 10800:
-                        self.logger.info("3 hours have passed since last auth for crawler. Re-authenticating.")
-                        self.enforce_auth()
-                        start = time.time()
-
-                    if (end_logging - start_logging) // 3600 > 0:
-                        self.logger.info("After 1h there are still classes not found. Continue crawler")
-                        start_logging = time.time()
-
-                    time.sleep(30)
+                time.sleep(30)
                 dt = datetime.datetime.now()
-        except requests.exceptions.ConnectionError:
-            self.logger.error("Timed out detected")
+            except requests.exceptions.ConnectionError:
+                self.logger.error("Time out detected")
+                self.enforce_auth()
+                continue
 
         self.logger.info("Stopping crawler")
 
