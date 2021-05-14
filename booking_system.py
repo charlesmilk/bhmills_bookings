@@ -20,6 +20,7 @@ offsets = {
     'tennisClass': 835
 }
 
+
 def init_logger(name, filename):
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
@@ -94,7 +95,6 @@ class BookingSystem:
     def crawler(self, candidates, tomorrow):
         dt = datetime.datetime.now()
         start_logging = time.time()
-        self.logger.info(f"There are candidates not available: {candidates}")
         self.logger.info("Crawler started")
 
         while dt < tomorrow and len(candidates) > 0:
@@ -108,9 +108,11 @@ class BookingSystem:
                     self.logger.info(f"After 1h there are still classes not found. Continue searching for {candidates}")
                     start_logging = time.time()
 
-                time.sleep(30)
+                time.sleep(60)
                 dt = datetime.datetime.now()
-            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+            except (
+                    requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout,
+                    requests.exceptions.HTTPError):
                 self.logger.error("Time out or connection error detected, sleeping 10 minutes")
                 time.sleep(600)
                 self.enforce_auth()
@@ -119,34 +121,41 @@ class BookingSystem:
         self.logger.info("Stopping crawler")
 
     def run(self, offset_tomorrow: int):
-            while True:
-                try:
-                    dt = datetime.datetime.now()
-                    tomorrow = datetime.datetime.combine(dt + datetime.timedelta(days=1), datetime.time.min)
-                    tomorrow = tomorrow + datetime.timedelta(minutes=offset_tomorrow)
-                    target_last_date = dt + datetime.timedelta(days=7)
-                    target_last_date = datetime.datetime.strftime(target_last_date, "%Y-%m-%d")
+        while True:
+            try:
+                dt = datetime.datetime.now()
+                tomorrow = datetime.datetime.combine(dt + datetime.timedelta(days=1), datetime.time.min)
+                tomorrow = tomorrow + datetime.timedelta(minutes=offset_tomorrow)
+                target_last_date = dt + datetime.timedelta(days=7)
+                target_last_date = datetime.datetime.strftime(target_last_date, "%Y-%m-%d")
+                days_crawler = [datetime.datetime.strftime(dt, "%Y-%m-%d"),
+                                datetime.datetime.strftime(tomorrow, "%Y-%m-%d")]
 
-                    self.enforce_auth()
-                    candidates = self.user.generate_candidates()
-                    self.search_target_date(target_last_date)
-                    classes_to_schedule, candidates_not_available = self.user.get_classes_to_schedule(candidates)
+                self.enforce_auth()
+                candidates = self.user.generate_candidates()
+                self.search_target_date(target_last_date)
+                classes_to_schedule, candidates_not_available = self.user.get_classes_to_schedule(candidates)
 
-                    if len(classes_to_schedule) > 0:
-                        self.do_bookings(classes_to_schedule)
+                if len(classes_to_schedule) > 0:
+                    self.do_bookings(classes_to_schedule)
+                if len(candidates_not_available) > 0:
+                    self.logger.info(f"There are candidates not available: {candidates}")
+                    candidates_not_available = [c for c in candidates_not_available if c[0] in days_crawler]
                     if len(candidates_not_available) > 0:
+                        self.logger.info(f"Running crawler for {candidates_not_available}")
                         self.crawler(candidates_not_available, tomorrow)
 
-                    dt = datetime.datetime.now()
-                    if dt < tomorrow:
-                        time_until_tomorrow = tomorrow - dt
-                        self.logger.info(
-                            f"There are no candidates to book - sleep {time_until_tomorrow} until next day")
-                        time.sleep(time_until_tomorrow.seconds)
-                except Exception as e:
-                    self.logger.exception(e)
-                    time.sleep(600)
-                    continue
+                dt = datetime.datetime.now()
+                if dt < tomorrow:
+                    time_until_tomorrow = tomorrow - dt
+                    self.logger.info(
+                        f"There are no candidates to book - sleep {time_until_tomorrow} until next day")
+                    time.sleep(time_until_tomorrow.seconds)
+            except Exception as e:
+                self.logger.exception(e)
+                time.sleep(600)
+                continue
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
