@@ -154,11 +154,12 @@ class BookingUser:
         # after filtering candidates using the preferences, filter the ones already scheduled
         filtered_candidates = []
         for candidate in class_candidates:
-            scheduled_days = {(day["classDate"][0], day["classTime"].lower()) for day in
+            scheduled_days = {(day["classDate"][0], self._parse_hour(day["classTime"].lower())) for day in
                               scheduled_classes}
             candidate_date = candidate[0]
-            candidate_hour = candidate[2]
-            preference_datetime = parser.parse(candidate_date) + self._parse_hour(candidate_hour)
+            candidate_hour = self._parse_hour(candidate[2])
+            preference_datetime = parser.parse(candidate_date) + candidate_hour
+
 
             if now < preference_datetime and (candidate_date, candidate_hour) not in scheduled_days:
                 filtered_candidates.append(candidate)
